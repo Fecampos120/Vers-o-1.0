@@ -15,7 +15,9 @@ import {
   UsersIcon,
   ClipboardCheckIcon,
   NotepadIcon,
-  MapPinIcon
+  MapPinIcon,
+  HomeIcon,
+  ChevronRightIcon
 } from './components/Icons';
 import Dashboard from './components/Dashboard';
 import Reminders from './components/Reminders';
@@ -78,6 +80,89 @@ const NavItem: React.FC<{
     </button>
   </li>
 );
+
+interface BreadcrumbItem {
+    label: string;
+    icon?: React.ReactNode;
+    action?: () => void;
+}
+
+// Breadcrumbs Component
+const Breadcrumbs: React.FC<{ view: View, editingContract: Contract | null, setView: (view: View) => void }> = ({ view, editingContract, setView }) => {
+    
+    // Determine the breadcrumb path based on current view
+    const getPath = (): BreadcrumbItem[] => {
+        const home: BreadcrumbItem = { label: 'Home', icon: <HomeIcon className="w-4 h-4" />, action: () => setView('dashboard') };
+        
+        switch (view) {
+            case 'dashboard':
+                return [home, { label: 'Dashboard' }];
+            case 'contracts':
+                return [home, { label: 'Projetos' }];
+            case 'new-contract':
+                return [
+                    home, 
+                    { label: 'Projetos', action: () => setView('contracts') }, 
+                    { label: editingContract ? `Editar: ${editingContract.clientName}` : 'Novo Contrato' }
+                ];
+            case 'progress':
+                return [home, { label: 'Progresso' }];
+            case 'checklist':
+                return [home, { label: 'Checklist de Obra' }];
+            case 'tech-visits':
+                return [home, { label: 'Visitas Técnicas' }];
+            case 'projections':
+                return [home, { label: 'Financeiro' }, { label: 'Projeções e Recebidos' }];
+            case 'late-payments':
+                return [home, { label: 'Financeiro' }, { label: 'Parcelas Atrasadas' }];
+            case 'receipts':
+                return [home, { label: 'Financeiro' }, { label: 'Recibos' }];
+            case 'reminders':
+                return [home, { label: 'Lembretes' }];
+            case 'notes':
+                return [home, { label: 'Bloco de Notas' }];
+            case 'partners':
+                return [home, { label: 'Parceiros' }];
+            case 'database':
+                return [home, { label: 'Configurações' }, { label: 'Banco de Dados' }];
+            case 'settings':
+                return [home, { label: 'Configurações' }, { label: 'Geral' }];
+            default:
+                return [home];
+        }
+    };
+
+    const path = getPath();
+
+    return (
+        <nav className="flex mb-6" aria-label="Breadcrumb">
+            <ol className="inline-flex items-center space-x-1 md:space-x-2 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/60 shadow-sm">
+                {path.map((item, index) => {
+                    const isLast = index === path.length - 1;
+                    return (
+                        <li key={index} className="inline-flex items-center">
+                            {index > 0 && <ChevronRightIcon className="w-4 h-4 text-slate-400 mx-1" />}
+                            {item.action && !isLast ? (
+                                <button 
+                                    onClick={item.action}
+                                    className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+                                >
+                                    {item.icon && <span className="mr-1">{item.icon}</span>}
+                                    {item.label}
+                                </button>
+                            ) : (
+                                <span className={`inline-flex items-center text-sm font-medium ${isLast ? 'text-blue-600' : 'text-slate-500'}`}>
+                                    {item.icon && <span className="mr-1">{item.icon}</span>}
+                                    {item.label}
+                                </span>
+                            )}
+                        </li>
+                    );
+                })}
+            </ol>
+        </nav>
+    );
+};
 
 // Helper to calculate business days
 const addWorkDays = (startDate: Date, days: number): Date => {
@@ -1004,7 +1089,8 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="flex-1 p-6 sm:p-8 lg:p-10 overflow-auto bg-slate-100/80 backdrop-blur-sm">
+      <main className="flex-1 p-6 sm:p-8 lg:p-10 overflow-auto bg-slate-100/80 backdrop-blur-sm flex flex-col">
+        {!isLoading && <Breadcrumbs view={view} editingContract={editingContract} setView={setView} />}
         {renderView()}
       </main>
     </div>
